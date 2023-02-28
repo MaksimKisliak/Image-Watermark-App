@@ -53,20 +53,24 @@ class WatermarkApp:
         self.output_frame.grid(row=0, column=2, padx=10, pady=10)
 
         # Packing widgets for original frame
-        self.original_label.grid(row=0, column=0, padx=10, pady=10)
-        self.original_button.grid(row=1, column=0, pady=10)
+        self.original_label.grid(row=0, column=0, padx=5, pady=5)
+        self.original_button.grid(row=1, column=0, padx=5, pady=5)
 
         # Packing widgets for watermark frame
-        self.watermark_label.grid(row=0, column=0, padx=10, pady=10)
-        self.watermark_button.grid(row=1, column=0, pady=10)
-        self.watermark_opacity_label.grid(row=2, column=0, padx=10, pady=10)
-        self.watermark_opacity_scale.grid(row=3, column=0, padx=10, pady=10)
+        self.watermark_label.grid(row=0, column=0, padx=5, pady=5)
+        self.watermark_button.grid(row=1, column=0, padx=5, pady=5)
+        self.watermark_opacity_label.grid(row=2, column=0, padx=5, pady=5)
+        self.watermark_opacity_scale.grid(row=3, column=0, padx=5, pady=5)
+
+        # Position the "Add Watermark" button below the watermark frame
+        self.add_button.grid(row=4, column=1, pady=10)
 
         # Packing widgets for output frame
-        self.output_label.grid(row=0, column=0, padx=10, pady=10)
-        self.save_button.grid(row=1, column=2, pady=10)
+        self.output_label.grid(row=0, column=0, padx=5, pady=5)
+        self.save_button.grid(row=1, column=1, padx=5, pady=5)
 
-        self.add_button.grid(row=1, column=1, padx=10)
+        # Position the output frame below the original frame
+        self.output_frame.grid(row=0, column=2, rowspan=4, padx=10, pady=10)
 
         # Variables
         self.original_image_path = None
