@@ -16,7 +16,7 @@ class WatermarkApp:
 
         # Creating widgets for original frame
         self.original_label = Label(
-            self.original_frame, text="Original Image", font=("Helvetica", 16)
+            self.original_frame, text="Original Image", font=("Arial", 16)
         )
         self.original_button = Button(
             self.original_frame, text="Choose an image", command=self.choose_original
@@ -24,7 +24,7 @@ class WatermarkApp:
 
         # Creating widgets for watermark frame
         self.watermark_label = Label(
-            self.watermark_frame, text="Watermark Image", font=("Helvetica", 16)
+            self.watermark_frame, text="Watermark Image", font=("Arial", 16)
         )
         self.watermark_button = Button(
             self.watermark_frame, text="Choose an image", command=self.choose_watermark
@@ -32,7 +32,7 @@ class WatermarkApp:
 
         # Creating widgets for output frame
         self.output_label = Label(
-            self.output_frame, text="Output Image", font=("Helvetica", 16)
+            self.output_frame, text="Proportionally Resized Image", font=("Arial", 16)
         )
         self.add_button = Button(
             self.master, text="Add watermark", command=self.add_watermark
@@ -46,21 +46,26 @@ class WatermarkApp:
         self.watermark_frame.grid(row=0, column=1, padx=10, pady=10)
         self.output_frame.grid(row=0, column=2, padx=10, pady=10)
 
-        # Packing widgets
-        self.original_label.pack(side=TOP, padx=10, pady=10)
-        self.original_button.pack(side=TOP, pady=10)
-        self.watermark_label.pack(side=TOP, padx=10, pady=10)
-        self.watermark_button.pack(side=TOP, pady=10)
-        self.output_label.place(x=0, y=0)
-        self.add_button.grid(row=1, column=0, padx=10, pady=10)
-        self.save_button.grid(row=2, column=0, padx=10, pady=10)
+        # Packing widgets for original frame
+        self.original_label.grid(row=0, column=0, padx=10, pady=10)
+        self.original_button.grid(row=1, column=0, pady=10)
+
+        # Packing widgets for watermark frame
+        self.watermark_label.grid(row=0, column=0, padx=10, pady=10)
+        self.watermark_button.grid(row=1, column=0, pady=10)
+
+        # Packing widgets for output frame
+        self.output_label.grid(row=0, column=0, padx=10, pady=10)
+        self.save_button.grid(row=1, column=2, pady=10)
+
+        self.add_button.grid(row=1, column=1, padx=10)
 
         # Variables
         self.original_image_path = None
         self.watermark_image_path = None
         self.original_image = None
         self.watermark_image = None
-        self.output_image = None
+        self.proportional_output_image = None
 
     def choose_original(self):
         file_path = filedialog.askopenfilename(
@@ -90,36 +95,54 @@ class WatermarkApp:
             original_image = Image.open(self.original_image_path)
             watermark_image = Image.open(self.watermark_image_path)
 
-            # Create output image
-            output_image = Image.new("RGBA", original_image.size)
+            # Calculate the scale factor to resize the watermark image based on the size of the original image
+            scale_factor = max(original_image.size[0] / watermark_image.size[0],
+                               original_image.size[1] / watermark_image.size[1])
+            new_width = int(watermark_image.size[0] * scale_factor)
+            new_height = int(watermark_image.size[1] * scale_factor)
+
+            # Resize the watermark image to match the size of the original image
+            watermark_image = watermark_image.resize((new_width, new_height))
+
+            # Create a new transparent image to paste the original image and the watermark image onto it
+            output_image = Image.new('RGBA', original_image.size, (0, 0, 0, 0))
+
+            # Paste the original image onto the output image
             output_image.paste(original_image, (0, 0))
-            output_image.paste(
-                watermark_image,
-                (
-                    original_image.size[0] - watermark_image.size[0],
-                    original_image.size[1] - watermark_image.size[1],
-                ),
-                mask=watermark_image,
-            )
-            self.output_image = ImageTk.PhotoImage(output_image)
-            self.output_label.configure(image=self.output_image)
+
+            # Paste the watermark image onto the output image multiple times to cover the entire surface of the original image
+            for i in range(int(original_image.size[0] / new_width) + 1):
+                for j in range(int(original_image.size[1] / new_height) + 1):
+                    x = i * new_width
+                    y = j * new_height
+                    output_image.alpha_composite(watermark_image, (x, y))
+
+            # Save the original size output image to a variable for saving later
+            self.output_image = output_image.copy()
+
+            # Resize the output image to fit within the app frame
+            output_image.thumbnail((400, 400))
+
+            # Update the output labels with the output images
+            self.proportional_output_image = ImageTk.PhotoImage(output_image)
+            self.output_label.configure(image=self.proportional_output_image)
+
             messagebox.showinfo("Watermark added", "Watermark has been added successfully!")
 
     def save_image(self):
         if self.output_image:
-            # Ask user to choose a file path to save the output image
+            # Ask user to choose a file path to save the
             file_path = filedialog.asksaveasfilename(
                 title="Save image",
                 filetypes=(("png files", "*.png"), ("all files", "*.*")),
+                defaultextension=".png"
             )
             if file_path:
-                # Save the output image to the chosen file path
-                output_image = Image.open(self.original_image_path)
-                output_image.paste(Image.open(self.watermark_image_path), (0, 0),
-                                   mask=Image.open(self.watermark_image_path).convert('RGBA'))
-                output_image.save(file_path)
+                # Save the output image to the chosen file path with its original dimensions
+                self.output_image.save(file_path)
 
 
 root = Tk()
 app = WatermarkApp(root)
 root.mainloop()
+
