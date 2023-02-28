@@ -29,10 +29,16 @@ class WatermarkApp:
         self.watermark_button = Button(
             self.watermark_frame, text="Choose an image", command=self.choose_watermark
         )
+        self.watermark_opacity_label = Label(
+            self.watermark_frame, text="Opacity", font=("Arial", 12)
+        )
+        self.watermark_opacity_scale = Scale(
+            self.watermark_frame, from_=0, to=100, orient=HORIZONTAL, command=self.adjust_opacity
+        )
 
         # Creating widgets for output frame
         self.output_label = Label(
-            self.output_frame, text="Proportionally Resized Image", font=("Arial", 16)
+            self.output_frame, text="Watermarked Image", font=("Arial", 16)
         )
         self.add_button = Button(
             self.master, text="Add watermark", command=self.add_watermark
@@ -53,6 +59,8 @@ class WatermarkApp:
         # Packing widgets for watermark frame
         self.watermark_label.grid(row=0, column=0, padx=10, pady=10)
         self.watermark_button.grid(row=1, column=0, pady=10)
+        self.watermark_opacity_label.grid(row=2, column=0, padx=10, pady=10)
+        self.watermark_opacity_scale.grid(row=3, column=0, padx=10, pady=10)
 
         # Packing widgets for output frame
         self.output_label.grid(row=0, column=0, padx=10, pady=10)
@@ -65,11 +73,12 @@ class WatermarkApp:
         self.watermark_image_path = None
         self.original_image = None
         self.watermark_image = None
-        self.proportional_output_image = None
+        self.watermark_opacity = 100
+        self.output_image = None
 
     def choose_original(self):
         file_path = filedialog.askopenfilename(
-            title="Choose an image", filetypes=(("png files", "*.png"), ("all files", "*.*"))
+            title="Choose an image", filetypes=(("png files", "*.png"), ("jpeg files", "*.jpg"), ("all files", "*.*"))
         )
         if file_path:
             self.original_image_path = file_path
@@ -80,7 +89,7 @@ class WatermarkApp:
 
     def choose_watermark(self):
         file_path = filedialog.askopenfilename(
-            title="Choose an image", filetypes=(("png files", "*.png"), ("all files", "*.*"))
+            title="Choose an image", filetypes=(("png files", "*.png"), ("jpeg files", "*.jpg"), ("all files", "*.*"))
         )
         if file_path:
             self.watermark_image_path = file_path
@@ -88,6 +97,11 @@ class WatermarkApp:
             self.watermark_image.thumbnail((400, 400))
             self.watermark_image = ImageTk.PhotoImage(self.watermark_image)
             self.watermark_label.configure(image=self.watermark_image)
+            self.watermark_opacity_scale.set(100)
+            self.watermark_opacity = 100
+
+    def adjust_opacity(self, value):
+        self.watermark_opacity = int(value)
 
     def add_watermark(self):
         if self.original_image_path and self.watermark_image_path:
@@ -110,12 +124,14 @@ class WatermarkApp:
             # Paste the original image onto the output image
             output_image.paste(original_image, (0, 0))
 
-            # Paste the watermark image onto the output image multiple times to cover the entire surface of the original image
-            for i in range(int(original_image.size[0] / new_width) + 1):
-                for j in range(int(original_image.size[1] / new_height) + 1):
-                    x = i * new_width
-                    y = j * new_height
-                    output_image.alpha_composite(watermark_image, (x, y))
+            # Calculate the opacity of the watermark image
+            opacity = int(255 * self.watermark_opacity / 100)
+            watermark_image.putalpha(opacity)
+
+            # Paste the watermark image onto the output image at the desired position and opacity
+            x = (original_image.size[0] - watermark_image.size[0]) // 2
+            y = (original_image.size[1] - watermark_image.size[1]) // 2
+            output_image.alpha_composite(watermark_image, (x, y))
 
             # Save the original size output image to a variable for saving later
             self.output_image = output_image.copy()
@@ -134,8 +150,8 @@ class WatermarkApp:
             # Ask user to choose a file path to save the
             file_path = filedialog.asksaveasfilename(
                 title="Save image",
-                filetypes=(("png files", "*.png"), ("all files", "*.*")),
-                defaultextension=".png"
+                filetypes=(("png files", "*.png"), ("jpeg files", "*.jpg"), ("all files", "*.*")),
+                defaultextension=".jpg"
             )
             if file_path:
                 # Save the output image to the chosen file path with its original dimensions
@@ -145,4 +161,3 @@ class WatermarkApp:
 root = Tk()
 app = WatermarkApp(root)
 root.mainloop()
-
