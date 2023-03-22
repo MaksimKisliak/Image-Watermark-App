@@ -36,5 +36,3 @@
 </ol>
 <h3>Contributing</h3>
 <p>If you find a bug or have a feature request, please open an issue or submit a pull request.</p>
-<h3>License</h3>
-<p>This project is licensed under the MIT License - see the <a href="LICENSE">LICENSE</a> file for details.</p>
